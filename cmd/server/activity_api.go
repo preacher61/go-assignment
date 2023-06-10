@@ -26,8 +26,8 @@ func newActivityAPI(requests int, duration time.Duration) *activityAPI {
 }
 
 func (a *activityAPI) getEvent(ctx context.Context) (*model.ActivityAPIResposne, error) {
-	if !a.rateLimiter.Allow() {
-		return nil, errors.Errorf("api rate limit reached")
+	if err := a.rateLimiter.Wait(ctx); err != nil {
+		return nil, errors.Wrap(err, "api rate limit reached")
 	}
 	res, err := a.send(ctx)
 	if err != nil {
