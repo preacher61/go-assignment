@@ -27,6 +27,7 @@ func main() {
 		}
 	}()
 	log.Print("Server Started")
+	log.Printf("\n Listening on: %s \n", srv.Addr)
 
 	<-done
 	log.Print("Server Stopped")

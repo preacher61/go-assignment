@@ -1,0 +1,14 @@
+.git
+.gitignore
+CODEOWNERS
+README.md
+.github
+Jenkinsfile
+.dockerignore
+Dockerfile
+.golangci.yaml
+build
+build-linux-amd64
+coverage.*
+.idea
+**/*.mmdb

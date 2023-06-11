@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"preacher61/go-assignment/httpjson"
 	"preacher61/go-assignment/model"
@@ -23,6 +24,7 @@ func newHTTPGetEventsHandler() *httpGetEventsHandler {
 }
 
 func (h *httpGetEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Println("request received")
 	ctx := r.Context()
 	res, err := h.handle(ctx)
 	if err != nil {

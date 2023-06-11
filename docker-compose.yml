@@ -1,0 +1,11 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: go-server
+    image: go-server
+    entrypoint: [/data/server]
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
