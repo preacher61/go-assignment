@@ -26,7 +26,7 @@ func TestActivityAPISuccess(t *testing.T) {
 		rateLimiter: rate.NewLimiter(rate.Every(1*time.Second), 1),
 	}
 
-	res, err := a.getEvent(context.TODO())
+	res, err := a.getActivity(context.TODO())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,7 +47,7 @@ func TestActivityAPIInternalServerError(t *testing.T) {
 		rateLimiter: rate.NewLimiter(rate.Every(1*time.Second), 1),
 	}
 
-	_, err := a.getEvent(context.TODO())
+	_, err := a.getActivity(context.TODO())
 	if err == nil {
 		t.Fatal("error expected")
 	}
@@ -69,7 +69,7 @@ func TestActivityAPISuccessUnMarshalError(t *testing.T) {
 		rateLimiter: rate.NewLimiter(rate.Every(1*time.Second), 1),
 	}
 
-	_, err := a.getEvent(context.TODO())
+	_, err := a.getActivity(context.TODO())
 	if err == nil {
 		t.Fatal("error expected")
 	}
@@ -87,7 +87,7 @@ func TestActivityAPISuccessNilResponse(t *testing.T) {
 		rateLimiter: rate.NewLimiter(rate.Every(1*time.Second), 1),
 	}
 
-	_, err := a.getEvent(context.TODO())
+	_, err := a.getActivity(context.TODO())
 	if err == nil {
 		t.Fatal("error expected")
 	}

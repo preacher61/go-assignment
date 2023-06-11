@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"preacher61/go-assignment/httpjson"
 	"runtime"
 
 	"github.com/gorilla/mux"
@@ -38,26 +39,26 @@ var routes = []struct {
 	configure func(r *mux.Route)
 }{
 	{
-		name: "get-events",
+		name: "get-activities",
 		handler: func() http.Handler {
 			return newHTTPGetEventsHandler()
 		},
 		configure: func(r *mux.Route) {
-			r.Methods(http.MethodGet).Path("/events")
+			r.Methods(http.MethodGet).Path("/activities")
 		},
 	},
 }
 
 func httpNotFound(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNotFound)
-	w.Write([]byte(`{"error": "HTTP route not found"}`))
+	httpjson.WriteResponse(w, http.StatusNotFound, &errorResponse{
+		Error: "HTTP route not found",
+	})
 }
 
 func httpMethodNotAllowed(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusMethodNotAllowed)
-	w.Write([]byte(`{"error": "HTTP method not allowed"}`))
+	httpjson.WriteResponse(w, http.StatusMethodNotAllowed, &errorResponse{
+		Error: "HTTP method not allowed",
+	})
 }
 
 func panicRecovery(h http.Handler) http.Handler {
@@ -69,11 +70,16 @@ func panicRecovery(h http.Handler) http.Handler {
 				buf = buf[:n]
 
 				log.Printf("recovering from err %v\n %s", err, buf)
-				w.Header().Set("Content-Type", "application/json")
-				w.Write([]byte(`{"error":"our server got panic"}`))
+				httpjson.WriteResponse(w, http.StatusInternalServerError, &errorResponse{
+					Error: "our server got panic",
+				})
 			}
 		}()
 
 		h.ServeHTTP(w, r)
 	})
+}
+
+type errorResponse struct {
+	Error string `json:"error"`
 }
