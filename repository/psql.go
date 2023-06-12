@@ -5,17 +5,19 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
 )
 
 const (
-	host = "database"
-	port = 5432
+	host              = "database"
+	port              = 5432
+	tableActivityLogs = "activity_logs"
 )
 
-const createActivityTableIfNotQuery = `CREATE TABLE IF NOT EXISTS activity_log(
+const createActivityTableIfNotQuery = `CREATE TABLE IF NOT EXISTS activity_logs(
 											id SERIAL PRIMARY KEY,
 											key VARCHAR(100) NOT NULL,
 											activity VARCHAR(100) NOT NULL,
@@ -23,9 +25,9 @@ const createActivityTableIfNotQuery = `CREATE TABLE IF NOT EXISTS activity_log(
 										);`
 
 // OpenPgSQL creates a new postgres-sql connection and returns.
-func OpenPgSQL(username, password, database string) (*sql.DB, error) {
+func OpenPgSQL() (*sql.DB, error) {
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		host, port, username, password, database)
+		host, port, os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("POSTGRES_DB"))
 
 	conn, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -48,5 +50,6 @@ func CreateTableIfNot(ctx context.Context, db *sql.DB) error {
 	if err != nil {
 		return errors.Wrap(err, "create table")
 	}
+	log.Println("Table activity_logs created successfully")
 	return nil
 }
