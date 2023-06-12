@@ -58,7 +58,6 @@ func (a *activityAPI) send(ctx context.Context) (*model.Activity, error) {
 		return nil, errors.Wrap(err, "read response")
 	}
 
-	fmt.Println(string(b))
 	var body *model.Activity
 	err = json.Unmarshal(b, &body)
 	if err != nil {

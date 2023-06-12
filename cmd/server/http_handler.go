@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"preacher61/go-assignment/httpjson"
 	"preacher61/go-assignment/model"
@@ -12,19 +11,24 @@ import (
 	"github.com/pkg/errors"
 )
 
+var errActivityApiNotAvailabe = errors.New("Activity-API not available")
+
 type httpGetEventsHandler struct {
-	fetchActivity func(ctx context.Context) (*model.Activity, error)
+	fetchActivity   func(ctx context.Context) (*model.Activity, error)
+	persistResponse func(ctx context.Context, response []*model.Activity) error
 }
 
 func newHTTPGetEventsHandler() *httpGetEventsHandler {
 	a := newActivityAPI(3, time.Second)
 	return &httpGetEventsHandler{
 		fetchActivity: a.getActivity,
+		persistResponse: func(ctx context.Context, response []*model.Activity) error {
+			return nil // to be implemented
+		},
 	}
 }
 
 func (h *httpGetEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println("request received")
 	ctx := r.Context()
 	res, err := h.handle(ctx)
 	if err != nil {
@@ -37,34 +41,57 @@ func (h *httpGetEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	httpjson.WriteResponse(w, http.StatusOK, res)
 }
 
+type responseMeta struct {
+	response *model.Activity
+	err      error
+}
+
 func (h *httpGetEventsHandler) handle(ctx context.Context) ([]*model.Activity, error) {
 	cancelCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	respChan := make(chan *model.Activity)
+	responseChan := make(chan []*model.Activity)
+	responseChanToPersist := make(chan []*model.Activity) // a chan that would help us persist the resposnes.
 	errChan := make(chan error)
-	done := make(chan struct{})
-	var wg sync.WaitGroup
+	persistingDone := make(chan struct{}) // notifies if the persisting process has been completed, if yes we can return the resposne.
 
+	// call the APIs and prepare the responses.
+	go h.prepareResponse(cancelCtx, responseChan, errChan)
+
+	// persist the above responses into some cache/messaging queue.
+	go h.persistRequestHistory(ctx, persistingDone, responseChanToPersist, errChan)
+
+	responses := []*model.Activity{}
+	/* loop until either of the following gets completed:
+	* - time expires
+	* - an error is encountered
+	* - persisting process is completed.
+	 */
+	for {
+		select {
+		case <-time.After(2 * time.Second):
+			return nil, errActivityApiNotAvailabe
+		case err := <-errChan:
+			return nil, err
+		case responses = <-responseChan:
+			responseChanToPersist <- responses
+		case <-persistingDone:
+			return responses, nil
+		}
+	}
+
+}
+
+func (h *httpGetEventsHandler) prepareResponse(ctx context.Context, res chan []*model.Activity, errChan chan error) {
+	respChan := make(chan *responseMeta)
+	var wg sync.WaitGroup
+	done := make(chan struct{})
+
+	// call the api three times
 	for i := 0; i < 3; i++ {
 		wg.Add(1)
 
-		go func(ctx context.Context) {
-			defer wg.Done()
-
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				res, err := h.fetchActivity(ctx)
-				if err != nil {
-					err = errors.Wrap(err, "fetch activity")
-					errChan <- err
-					return
-				}
-				respChan <- res
-			}
-		}(cancelCtx)
+		go h.callActivityAPI(ctx, &wg, respChan)
 	}
 
 	go func() {
@@ -73,18 +100,73 @@ func (h *httpGetEventsHandler) handle(ctx context.Context) ([]*model.Activity, e
 	}()
 
 	responses := []*model.Activity{}
+	/* loop until either of the following gets completed:
+	* - time expires
+	* - an error is encountered
+	* - all the responses are collected, which is marked by the done chan.
+	 */
 	for {
 		select {
-		case err := <-errChan:
-			cancel()
-			return nil, err
 		case res := <-respChan:
-			responses = append(responses, res)
+			if res.err != nil {
+				err := errors.Wrap(res.err, "call api")
+				errChan <- err
+				return
+			}
+			responses = append(responses, res.response)
 		case <-done:
-			return responses, nil
-		case <-time.After(2 * time.Second):
-			cancel()
-			return nil, errors.New("Activity-API not available")
+			res <- responses
+			return
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func (h *httpGetEventsHandler) callActivityAPI(ctx context.Context, wg *sync.WaitGroup, resp chan *responseMeta) {
+	defer wg.Done()
+
+	select {
+	case <-ctx.Done():
+		return
+	default:
+		res, err := h.fetchActivity(ctx)
+		resp <- &responseMeta{response: res, err: err}
+		return
+	}
+}
+
+func (h *httpGetEventsHandler) persistRequestHistory(ctx context.Context, done chan struct{}, respChan chan []*model.Activity, errChan chan error) {
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func(ctx context.Context) {
+		defer wg.Done()
+
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			err := h.persistResponse(ctx, <-respChan)
+			if err != nil {
+				errChan <- err
+				return
+			}
+		}
+	}(ctx)
+
+	go func() {
+		wg.Wait()
+		done <- struct{}{}
+	}()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-done:
+			close(done)
+			return
 		}
 	}
 }
