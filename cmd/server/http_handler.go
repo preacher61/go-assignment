@@ -13,7 +13,7 @@ import (
 )
 
 type httpGetEventsHandler struct {
-	fetchActivity func(ctx context.Context) (*model.ActivityAPIResposne, error)
+	fetchActivity func(ctx context.Context) (*model.Activity, error)
 }
 
 func newHTTPGetEventsHandler() *httpGetEventsHandler {
@@ -37,11 +37,11 @@ func (h *httpGetEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 	httpjson.WriteResponse(w, http.StatusOK, res)
 }
 
-func (h *httpGetEventsHandler) handle(ctx context.Context) ([]*model.ActivityAPIResposne, error) {
+func (h *httpGetEventsHandler) handle(ctx context.Context) ([]*model.Activity, error) {
 	cancelCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	respChan := make(chan *model.ActivityAPIResposne)
+	respChan := make(chan *model.Activity)
 	errChan := make(chan error)
 	done := make(chan struct{})
 	var wg sync.WaitGroup
@@ -72,7 +72,7 @@ func (h *httpGetEventsHandler) handle(ctx context.Context) ([]*model.ActivityAPI
 		done <- struct{}{}
 	}()
 
-	responses := []*model.ActivityAPIResposne{}
+	responses := []*model.Activity{}
 	for {
 		select {
 		case err := <-errChan:

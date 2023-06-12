@@ -16,8 +16,8 @@ import (
 
 func TestHTTPHanlderSuccess(t *testing.T) {
 	h := &httpGetEventsHandler{
-		fetchActivity: func(ctx context.Context) (*model.ActivityAPIResposne, error) {
-			return &model.ActivityAPIResposne{
+		fetchActivity: func(ctx context.Context) (*model.Activity, error) {
+			return &model.Activity{
 				Activity: "test activity",
 				Key:      "6786876",
 			}, nil
@@ -37,7 +37,7 @@ func TestHTTPHanlderSuccess(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var res []*model.ActivityAPIResposne
+	var res []*model.Activity
 	err = json.Unmarshal(b, &res)
 	if err != nil {
 		t.Fatal(err)
@@ -51,12 +51,12 @@ func TestHTTPHanlderSuccess(t *testing.T) {
 func TestHTTPHanlderErrorFromOneRequest(t *testing.T) {
 	var callerCounter atomic.Int32
 	h := &httpGetEventsHandler{
-		fetchActivity: func(ctx context.Context) (*model.ActivityAPIResposne, error) {
+		fetchActivity: func(ctx context.Context) (*model.Activity, error) {
 			if callerCounter.Load() == 1 {
 				return nil, errors.New("some i/o error")
 			}
 			callerCounter.Add(1)
-			return &model.ActivityAPIResposne{
+			return &model.Activity{
 				Activity: "test activity",
 				Key:      "6786876",
 			}, nil
@@ -88,9 +88,9 @@ func TestHTTPHanlderErrorFromOneRequest(t *testing.T) {
 
 func TestHTTPHanlderErrorTimeOut(t *testing.T) {
 	h := &httpGetEventsHandler{
-		fetchActivity: func(ctx context.Context) (*model.ActivityAPIResposne, error) {
+		fetchActivity: func(ctx context.Context) (*model.Activity, error) {
 			time.Sleep(1 * time.Minute)
-			return &model.ActivityAPIResposne{
+			return &model.Activity{
 				Activity: "test activity",
 				Key:      "6786876",
 			}, nil

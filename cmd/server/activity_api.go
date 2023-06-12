@@ -25,7 +25,7 @@ func newActivityAPI(requests int, duration time.Duration) *activityAPI {
 	}
 }
 
-func (a *activityAPI) getActivity(ctx context.Context) (*model.ActivityAPIResposne, error) {
+func (a *activityAPI) getActivity(ctx context.Context) (*model.Activity, error) {
 	if err := a.rateLimiter.Wait(ctx); err != nil {
 		return nil, errors.Wrap(err, "api rate limit reached")
 	}
@@ -36,7 +36,7 @@ func (a *activityAPI) getActivity(ctx context.Context) (*model.ActivityAPIRespos
 	return res, nil
 }
 
-func (a *activityAPI) send(ctx context.Context) (*model.ActivityAPIResposne, error) {
+func (a *activityAPI) send(ctx context.Context) (*model.Activity, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/activity", a.url), http.NoBody)
 	if err != nil {
 		return nil, errors.Wrap(err, "new HTTP request")
@@ -59,7 +59,7 @@ func (a *activityAPI) send(ctx context.Context) (*model.ActivityAPIResposne, err
 	}
 
 	fmt.Println(string(b))
-	var body *model.ActivityAPIResposne
+	var body *model.Activity
 	err = json.Unmarshal(b, &body)
 	if err != nil {
 		return nil, errors.Wrap(err, "un-marshal response")
