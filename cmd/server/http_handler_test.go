@@ -162,3 +162,39 @@ func TestHTTPHanlderPersistResponseTimeOutErr(t *testing.T) {
 		t.Fatal("error expected")
 	}
 }
+
+func TestHTTPHanlderErrorPersistResponse(t *testing.T) {
+	h := &httpGetEventsHandler{
+		fetchActivity: func(ctx context.Context) (*model.Activity, error) {
+			return &model.Activity{
+				Activity: "test activity",
+				Key:      "6786876",
+			}, nil
+		},
+		persistResponse: func(ctx context.Context, response []*model.Activity) error {
+			return errors.New("i/o error")
+		},
+	}
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "http://localhost/activities", http.NoBody)
+	h.ServeHTTP(w, req)
+	w.Flush()
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("unexpected code: got %d, want %d", w.Code, http.StatusInternalServerError)
+	}
+
+	b, err := io.ReadAll(w.Result().Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var res errorResponse
+	err = json.Unmarshal(b, &res)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Error == "" {
+		t.Fatal("error expected")
+	}
+}

@@ -137,36 +137,18 @@ func (h *httpGetEventsHandler) callActivityAPI(ctx context.Context, wg *sync.Wai
 }
 
 func (h *httpGetEventsHandler) persistRequestHistory(ctx context.Context, done chan struct{}, respChan chan []*model.Activity, errChan chan error) {
-	var wg sync.WaitGroup
-
-	wg.Add(1)
-	go func(ctx context.Context) {
-		defer wg.Done()
-
-		select {
-		case <-ctx.Done():
-			return
-		default:
-			err := h.persistResponse(ctx, <-respChan)
-			if err != nil {
-				errChan <- err
-				return
-			}
-		}
-	}(ctx)
-
-	go func() {
-		wg.Wait()
-		done <- struct{}{}
-	}()
-
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-done:
-			close(done)
-			return
+		case res := <-respChan:
+			err := h.persistResponse(ctx, res)
+			if err != nil {
+				err = errors.Wrap(err, "persist response")
+				errChan <- err
+				return
+			}
+			done <- struct{}{}
 		}
 	}
 }
