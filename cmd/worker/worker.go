@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"preacher61/go-assignment/repository"
 
 	"github.com/rs/zerolog/log"
 )
@@ -13,8 +14,10 @@ type worker struct {
 
 func newWorker() *worker {
 	ri := newResponseInserter()
+	ar := repository.NewActivityRepository()
 	return &worker{
-		persistResponses: ri.processInsertion,
+		persistResponses:  ri.processInsertion,
+		logUniqActivities: ar.GetUniqActivitesCount,
 	}
 }
 
