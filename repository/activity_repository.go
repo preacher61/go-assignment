@@ -3,10 +3,12 @@ package repository
 import (
 	"context"
 	"database/sql"
+
 	"preacher61/go-assignment/model"
 
 	"github.com/lib/pq"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 // ActivityRepository exposes methods for performing
@@ -16,14 +18,14 @@ type ActivityRepository struct {
 }
 
 // NewActivityRepository returns a new ActivityRepository.
-func NewActivityRepository() (*ActivityRepository, error) {
+func NewActivityRepository() *ActivityRepository {
 	db, err := OpenPgSQL()
 	if err != nil {
-		return nil, errors.Wrap(err, "pgsql")
+		log.Fatal().Err(err).Msg("init pgsql failed")
 	}
 	return &ActivityRepository{
 		db: db,
-	}, nil
+	}
 }
 
 // InsertActivities inserts multiple activities into table `activity_logs`.

@@ -22,7 +22,7 @@ type httpGetEventsHandler struct {
 
 func newHTTPGetEventsHandler() *httpGetEventsHandler {
 	a := newActivityAPI(3, time.Second)
-	rCli := cache.NewRedisClient()
+	rCli := cache.NewRedisHandler()
 	return &httpGetEventsHandler{
 		fetchActivity:   a.getActivity,
 		persistResponse: rCli.Set,
