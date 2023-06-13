@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	host              = "database"
+	host              = "db"
 	port              = 5432
 	tableActivityLogs = "activity_logs"
 )
