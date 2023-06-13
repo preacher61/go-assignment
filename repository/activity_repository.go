@@ -15,7 +15,8 @@ type ActivityRepository struct {
 	db *sql.DB
 }
 
-func newActivityRepository() (*ActivityRepository, error) {
+// NewActivityRepository returns a new ActivityRepository.
+func NewActivityRepository() (*ActivityRepository, error) {
 	db, err := OpenPgSQL()
 	if err != nil {
 		return nil, errors.Wrap(err, "pgsql")

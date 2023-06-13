@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"preacher61/go-assignment/cache"
 	"preacher61/go-assignment/httpjson"
 	"preacher61/go-assignment/model"
 	"sync"
@@ -20,11 +21,10 @@ type httpGetEventsHandler struct {
 
 func newHTTPGetEventsHandler() *httpGetEventsHandler {
 	a := newActivityAPI(3, time.Second)
+	rCli := cache.NewRedisClient()
 	return &httpGetEventsHandler{
-		fetchActivity: a.getActivity,
-		persistResponse: func(ctx context.Context, response []*model.Activity) error {
-			return nil // to be implemented
-		},
+		fetchActivity:   a.getActivity,
+		persistResponse: rCli.Set,
 	}
 }
 

@@ -5,6 +5,7 @@ WORKDIR /app
 COPY . /app
 
 RUN apk add --no-cache make
+RUN go mod download github.com/onsi/ginkgo
 RUN make build
 
 # Step 2: Execute
