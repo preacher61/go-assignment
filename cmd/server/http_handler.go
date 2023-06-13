@@ -137,18 +137,16 @@ func (h *httpGetEventsHandler) callActivityAPI(ctx context.Context, wg *sync.Wai
 }
 
 func (h *httpGetEventsHandler) persistRequestHistory(ctx context.Context, done chan struct{}, respChan chan []*model.Activity, errChan chan error) {
-	for {
-		select {
-		case <-ctx.Done():
+	select {
+	case <-ctx.Done():
+		return
+	case res := <-respChan:
+		err := h.persistResponse(ctx, res)
+		if err != nil {
+			err = errors.Wrap(err, "persist response")
+			errChan <- err
 			return
-		case res := <-respChan:
-			err := h.persistResponse(ctx, res)
-			if err != nil {
-				err = errors.Wrap(err, "persist response")
-				errChan <- err
-				return
-			}
-			done <- struct{}{}
 		}
+		done <- struct{}{}
 	}
 }
