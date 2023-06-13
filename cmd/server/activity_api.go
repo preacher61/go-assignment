@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/time/rate"
 )
 
@@ -29,10 +30,13 @@ func (a *activityAPI) getActivity(ctx context.Context) (*model.Activity, error) 
 	if err := a.rateLimiter.Wait(ctx); err != nil {
 		return nil, errors.Wrap(err, "api rate limit reached")
 	}
+	log.Info().Msg("activity_api: fetching.....")
 	res, err := a.send(ctx)
 	if err != nil {
+		log.Error().Err(err).Msg("activity_api: send")
 		return nil, errors.Wrap(err, "send")
 	}
+	log.Info().Interface("response", res).Msg("activity_api: response received")
 	return res, nil
 }
 

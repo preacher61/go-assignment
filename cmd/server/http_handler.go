@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 var errActivityApiNotAvailabe = errors.New("Activity-API not available")
@@ -36,8 +37,10 @@ func (h *httpGetEventsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)
 		httpjson.WriteResponse(w, http.StatusInternalServerError, &errorResponse{
 			Error: err.Error(),
 		})
+		log.Error().Err(err).Msg("serve HTTP")
 		return
 	}
+	log.Info().Msg("success")
 	httpjson.WriteResponse(w, http.StatusOK, res)
 }
 
