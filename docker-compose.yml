@@ -32,6 +32,23 @@ services:
       - "8080:8080"
     restart: unless-stopped
     depends_on:
+      - cache
+    env_file:
+      - .env
+    links:
+      - cache
+    volumes:
+      - ./:/src
+  
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: go-worker
+    image: go-worker
+    entrypoint: [/data/worker]
+    restart: unless-stopped
+    depends_on:
       - db
       - cache
     env_file:

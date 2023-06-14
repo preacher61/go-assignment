@@ -55,12 +55,12 @@ func (r *responseInserter) processInsertion(ctx context.Context) int {
 	}
 
 	wg.Wait()
-	log.Info().Msg("response insertion completed......!")
 
 	if len(keysToDelete) < 1 {
 		return 0
 	}
 
+	log.Info().Msg("response insertion completed......!")
 	r.deleteKeys(ctx, keysToDelete)
 	return len(keysToDelete)
 }
