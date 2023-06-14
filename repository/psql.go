@@ -4,15 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 )
 
 const (
-	host              = "database"
+	host              = "db"
 	port              = 5432
 	tableActivityLogs = "activity_logs"
 )
@@ -38,18 +38,16 @@ func OpenPgSQL() (*sql.DB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "pgsql ping failed")
 	}
-	log.Println("Database connection established")
+	CreateTableIfNot(context.Background(), conn)
 	return conn, nil
 }
 
 // CreateTableIfNot is responsible for creating the table if not already.
-func CreateTableIfNot(ctx context.Context, db *sql.DB) error {
+func CreateTableIfNot(ctx context.Context, db *sql.DB) {
 	_, err := db.ExecContext(ctx,
 		createActivityTableIfNotQuery)
 
 	if err != nil {
-		return errors.Wrap(err, "create table")
+		log.Fatal().Msg("table creation failed")
 	}
-	log.Println("Table activity_logs created successfully")
-	return nil
 }
