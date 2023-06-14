@@ -26,7 +26,7 @@ func newResponseInserter() *responseInserter {
 	}
 }
 
-func (r *responseInserter) processInsertion(ctx context.Context) {
+func (r *responseInserter) processInsertion(ctx context.Context) int {
 	log.Info().Msg("Initiating response insertion.....")
 	var wg sync.WaitGroup
 
@@ -58,8 +58,9 @@ func (r *responseInserter) processInsertion(ctx context.Context) {
 	log.Info().Msg("response insertion completed......!")
 
 	if len(keysToDelete) < 1 {
-		return
+		return 0
 	}
 
 	r.deleteKeys(ctx, keysToDelete)
+	return len(keysToDelete)
 }

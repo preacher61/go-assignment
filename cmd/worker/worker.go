@@ -8,7 +8,7 @@ import (
 )
 
 type worker struct {
-	persistResponses  func(ctx context.Context)
+	persistResponses  func(ctx context.Context) int
 	logUniqActivities func(ctx context.Context)
 }
 
@@ -29,7 +29,11 @@ func (w *worker) run(ctx context.Context) {
 		}
 	}()
 
-	w.persistResponses(ctx)
+	keysProcessed := w.persistResponses(ctx)
+	if keysProcessed < 1 {
+		log.Info().Msg("No keys found in cache......suspending worker.!")
+		return
+	}
 	w.logUniqActivities(ctx)
 	log.Info().Msg("Work completed")
 }
